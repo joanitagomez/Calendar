@@ -5,23 +5,27 @@ import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 
 import javax.swing.BorderFactory;
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.Timer;
 import javax.swing.border.TitledBorder;
@@ -66,7 +70,7 @@ public class CalendarView extends JPanel implements ChangeListener {
 		setBorder(border);
 
 		System.out.println("Loading events..");
-		
+
 		File f = new File("event.ser");
 		if (f.exists()) {
 			model.readFile("event.ser");
@@ -89,16 +93,15 @@ public class CalendarView extends JPanel implements ChangeListener {
 				createEventDialog();
 				Event newEvent = model.createNewEvent(titleField.getText(), dateField.getText(), fromField.getText(),
 						toField.getText());
-			
-					if(model.timeConflict(newEvent)){
-						JOptionPane.showMessageDialog(null,"Time conflict. Try Again!");
-					}
-					else{
-						model.addEvent(newEvent);
-						model.update(c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH));
-						System.out.println("Event added.");
-					}
-				
+
+				if (model.timeConflict(newEvent)) {
+					JOptionPane.showMessageDialog(null, "Time conflict. Try Again!");
+				} else {
+					model.addEvent(newEvent);
+					model.update(c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH));
+					System.out.println("Event added.");
+				}
+
 			}
 		});
 
@@ -110,7 +113,7 @@ public class CalendarView extends JPanel implements ChangeListener {
 				model.update(c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH));
 			}
 		});
-		
+
 		JButton prevButton = new JButton("<");
 		prevButton.addActionListener(new ActionListener() {
 
@@ -178,7 +181,6 @@ public class CalendarView extends JPanel implements ChangeListener {
 		monthViewPanel.add(datePanel, BorderLayout.CENTER);
 
 		dayViewPanel = new JPanel(new GridLayout(0, 1));
-		dayViewPanel.setSize(10, 10);
 		dayViewPanel.setBorder(BorderFactory.createLineBorder(Color.black));
 		evsToday = model.getTodaysEvents();
 		System.out.println(evsToday);
@@ -186,17 +188,10 @@ public class CalendarView extends JPanel implements ChangeListener {
 
 		setBorder(border);
 		add(titlePanel, BorderLayout.NORTH);
-		add(monthViewPanel, BorderLayout.WEST);
+		add(monthViewPanel, BorderLayout.CENTER);
 		add(dayViewPanel, BorderLayout.EAST);
 
 	}
-	
-
-	private void add(TitledBorder border2) {
-		// TODO Auto-generated method stub
-		
-	}
-
 
 	/**
 	 * stateChanged
@@ -222,54 +217,68 @@ public class CalendarView extends JPanel implements ChangeListener {
 		// printDayView();
 		printMonth(c);
 	}
-	
+
 	/**
 	 * printEvents
 	 * 
 	 * 
 	 */
-
-
 	private void printEvents() {
-
 		dayViewPanel.removeAll();
+		final DefaultListModel<Event> evt = new DefaultListModel<>();
+		JScrollPane eListScrollPane = null;
+		final JList<Event> eList = new JList<>(evt);
+		eList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		eList.setSelectedIndex(0);
+		eList.setVisibleRowCount(-1);
+		eListScrollPane = new JScrollPane(eList);
+		Dimension d = eList.getPreferredSize();
+		d.width = 300;
+		eListScrollPane.setPreferredSize(d);
+
+		final JPopupMenu menu = new JPopupMenu();
+		JMenuItem delete = new JMenuItem("Delete");
 
 		for (int i = 0; i < evsToday.size(); i++) {
-
-			eventButton = new JButton();
-			eventButton.setText(evsToday.get(i) + "");
-			final JPopupMenu contextMenu = new JPopupMenu("Menu");
+			evt.addElement(evsToday.get(i));
 
 			final Event ev = evsToday.get(i);
-			// System.out.println("ev: " + ev + "\ni: " + i);
-			eventButton.setComponentPopupMenu(contextMenu);
-
-			dayViewPanel.add(eventButton);
-
-			JMenuItem delete = new JMenuItem("Delete");
 
 			delete.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					int option = JOptionPane.showConfirmDialog(null, "Delete " + ev.title + "?");
-					if(option == 0){
+					if (option == 0) {
 						model.deleteEvent(ev);
 						model.update(c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH));
 					}
-					else
-						return;
 				}
 
 			});
-			contextMenu.add(delete);
+
+			menu.add(delete);
+			eList.addMouseListener(new MouseAdapter() {
+
+				public void mouseClicked(MouseEvent e) {
+					eList.setSelectedIndex(eList.locationToIndex(e.getPoint()));
+					menu.show(e.getComponent(), e.getX(), e.getY());
+				}
+			});
+
+			eList.setComponentPopupMenu(menu);
 		}
+		dayViewPanel.add(eListScrollPane);
 	}
+
+	/**
+	 * printCalendar
+	 * 
+	 * 
+	 */
 
 	public void printCalendar() {
 		datePanel.removeAll();
 
-		// System.out.println("Date in model now: " + c.get(Calendar.YEAR) + "/"
-		// + c.get(Calendar.MONTH) + "/" + c.get(Calendar.DATE));
 		GregorianCalendar temp = new GregorianCalendar(c.get(Calendar.YEAR), c.get(Calendar.MONTH), 1);
 		int first = temp.get(Calendar.DAY_OF_WEEK) - 1;
 		int last = c.getActualMaximum(Calendar.DAY_OF_MONTH);
@@ -277,7 +286,6 @@ public class CalendarView extends JPanel implements ChangeListener {
 		int m = 6;
 		int n = 7;
 		int date = 1;
-		int i = 0;
 		JPanel[][] panelHolder = new JPanel[m][n];
 		Calendar today = Calendar.getInstance();
 		for (int row = 0; row < m; row++) {
@@ -286,6 +294,7 @@ public class CalendarView extends JPanel implements ChangeListener {
 				panelHolder[row][col] = new JPanel(new BorderLayout());
 				JButton button = new JButton();
 				final int currentDate = date;
+
 				button.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
@@ -293,21 +302,25 @@ public class CalendarView extends JPanel implements ChangeListener {
 					}
 				});
 
+				if (date == today.get(Calendar.DAY_OF_MONTH) && c.get(Calendar.MONTH) == today.get(Calendar.MONTH)
+						&& c.get(Calendar.YEAR) == today.get(Calendar.YEAR)) {
+					button.setForeground(Color.red);
+					button.setOpaque(true);
+				}
+
 				if ((row == 0 && col < first) || (date > last)) {
 					;
-				} else if (date == today.get(Calendar.DAY_OF_MONTH)
-						&& c.get(Calendar.MONTH) == today.get(Calendar.MONTH)
-						&& c.get(Calendar.YEAR) == today.get(Calendar.YEAR)) {
-					button.setBackground(Color.red);
-					button.setOpaque(true);
-					button.setText(Integer.toString(date++));
-					panelHolder[row][col].add(button);
 				} else if (date == c.get(Calendar.DAY_OF_MONTH)) {
 					button.setBackground(Color.black);
 					button.setOpaque(true);
 					button.setText(Integer.toString(date++));
 					panelHolder[row][col].add(button);
 
+				} else if (hasEvent(date)) {
+					button.setBackground(Color.orange);
+					button.setOpaque(true);
+					button.setText(Integer.toString(date++));
+					panelHolder[row][col].add(button);
 				} else {
 					button.setText(Integer.toString(date++));
 					panelHolder[row][col].add(button);
@@ -318,6 +331,22 @@ public class CalendarView extends JPanel implements ChangeListener {
 		}
 
 		datePanel.revalidate();
+	}
+	/**
+	 * hasEvent
+	 * 
+	 * 
+	 */
+	public boolean hasEvent(int date) {
+		Calendar cal;
+		for (Event e : evs) {
+			cal = e.getDateTime();
+			System.out.println(cal.getTime());
+			if ((cal.get(Calendar.YEAR) == c.get(Calendar.YEAR)) && (cal.get(Calendar.MONTH) == c.get(Calendar.MONTH))
+					&& cal.get(Calendar.DAY_OF_MONTH) == date)
+				return true;
+		}
+		return false;
 	}
 
 	/**
@@ -334,7 +363,8 @@ public class CalendarView extends JPanel implements ChangeListener {
 		panel.add(new JLabel("Title:"));
 		panel.add(titleField);
 		panel.add(new JLabel("Date: "));
-		dateField.setText((c.get(Calendar.MONTH) + 1) + "/" + c.get(Calendar.DAY_OF_MONTH) + "/" + c.get(Calendar.YEAR));
+		dateField
+				.setText((c.get(Calendar.MONTH) + 1) + "/" + c.get(Calendar.DAY_OF_MONTH) + "/" + c.get(Calendar.YEAR));
 		panel.add(dateField);
 		panel.add(new JLabel("From:"));
 		panel.add(fromField);

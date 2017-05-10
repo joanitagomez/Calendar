@@ -64,8 +64,8 @@ public class Event implements Serializable{
 	public String toString() {
 
 		DateFormat da = new SimpleDateFormat("EEE, MMM d,yyyy");
-		DateFormat st = new SimpleDateFormat("HH:mm");
-		DateFormat et = new SimpleDateFormat("HH:mm");
+		DateFormat st = new SimpleDateFormat("hh:mm a");
+		DateFormat et = new SimpleDateFormat("hh:mm a");
 
 		if(getEndTime() != null){
 			return (da.format(getDateTime().getTime()) + " " +st.format(getDateTime().getTime()) + "-" + et.format(getEndTime().getTime())

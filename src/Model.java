@@ -139,6 +139,7 @@ public class Model {
 	
 	public void addEvent(Event ev){
 		events.add(ev);
+		sortByTime(events);
 	}
 	/**
 	 * deleteEvent method
@@ -189,6 +190,8 @@ public class Model {
 					&& (currEvent.get(Calendar.DAY_OF_MONTH) == gcal.get(Calendar.DAY_OF_MONTH)))
 				todaysEvents.add(events.get(i));
 		}
+		sortByTime(todaysEvents);
+		
 	}
 
 	/**
