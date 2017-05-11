@@ -17,9 +17,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 public class Model {
-	int year;
-	int month;
-	int day;
+
 	Calendar gcal;
 
 	Event evnt;
@@ -27,6 +25,9 @@ public class Model {
 	ArrayList<Event> todaysEvents;
 	ArrayList<ChangeListener> listeners;
 
+	/**
+	 * Constructs a Model object
+	 */
 	Model() {
 		Calendar cal = Calendar.getInstance();
 		gcal = new GregorianCalendar(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH));
@@ -36,17 +37,33 @@ public class Model {
 	}
 
 	/**
-	 * getData returns the data
+	 * Returns the data in the model
 	 */
 	@SuppressWarnings("unchecked")
 	public ArrayList<Event> getEvents() {
 		return (ArrayList<Event>) events.clone();
 	}
 
+	/**
+	 * Attach a listener to the Model
+	 * 
+	 * @param c
+	 *            the listener
+	 */
 	public void attachListener(ChangeListener c) {
 		listeners.add(c);
 	}
 
+	/**
+	 * Change the current date in the model
+	 * 
+	 * @param yyyy
+	 *            : year to be set
+	 * @param mm
+	 *            : month to be set
+	 * @param dd
+	 *            : date to be set
+	 */
 	public void update(int yyyy, int mm, int dd) {
 		gcal.set(yyyy, mm, dd);
 		setTodaysEvents();
@@ -55,11 +72,9 @@ public class Model {
 	}
 
 	/**
-	 * This is the writeFile method that writes list of events to file using
-	 * serialization
+	 * Writes list of events to file using serialization
 	 * 
 	 * @param filename
-	 * @return nothing
 	 */
 
 	public void writeFile(String filename) {
@@ -75,10 +90,9 @@ public class Model {
 	}
 
 	/**
-	 * This is the readFile method that reads serialized file
+	 * Reads serialized file
 	 * 
 	 * @param filename
-	 * @return nothing
 	 */
 
 	@SuppressWarnings("unchecked")
@@ -95,15 +109,13 @@ public class Model {
 	}
 
 	/**
-	 * This is the createEvent method that creates events and adds to list of
-	 * events
+	 * Creates new event
 	 * 
 	 * @param title
 	 * @param date
 	 * @param sTime
 	 * @param eTime
-	 * @return boolean - to check if user entered date and time in the given
-	 *         format
+	 * @return Event - the new event that was created
 	 */
 
 	public Event createNewEvent(String title, String date, String sTime, String eTime) {
@@ -128,7 +140,6 @@ public class Model {
 			d2 = eformatter.parse(endTime);
 			c1.setTime(d2);
 		} catch (ParseException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -137,14 +148,23 @@ public class Model {
 	}
 
 	
-	public void addEvent(Event ev){
-		events.add(ev);
+	/**
+	 * Adds new event to arraylist of events
+	 * 
+	 * @param newEvent:
+	 *            New event to be added
+	 */
+	
+	public void addEvent(Event newEvent) {
+		events.add(newEvent);
 		sortByTime(events);
 	}
+
 	/**
-	 * deleteEvent method
+	 * Deletes event from the list
 	 * 
-	 * @param
+	 * @param ev
+	 *            : Event to be deleted
 	 */
 
 	public void deleteEvent(Event ev) {
@@ -152,94 +172,60 @@ public class Model {
 	}
 
 	/**
-	 * timeConflict method
+	 * Checks if there's a time conflict with existing events
 	 * 
-	 * @param
+	 * @param newEvent
+	 *            : New event that was created
 	 */
 	public boolean timeConflict(Event newEvent) {
+		
 		boolean conflict = false;
 		for (Event e : todaysEvents) {
-			if ((newEvent.dateTime.getTime().compareTo(e.endTime.getTime()) < 0) && (e.dateTime.getTime().compareTo(newEvent.endTime.getTime()) < 0)){
+			if ((newEvent.dateTime.getTime().compareTo(e.endTime.getTime()) < 0)
+					&& (e.dateTime.getTime().compareTo(newEvent.endTime.getTime()) < 0))
 				conflict = true;
-			}
-			
-			if(newEvent.dateTime.getTime().compareTo(e.dateTime.getTime()) < 0){
-				System.out.println(newEvent.dateTime.getTime() + " is before endtime of " + e.dateTime.getTime());
 
 		}
-//			if((newEvent.endTime.getTime().compareTo(e.dateTime.getTime()) > 0)){
-//				System.out.println(newEvent.endTime.getTime() + " new event endTime is after starttime of existing" + e.dateTime.getTime());
-//			}
-		
-			}
 		return conflict;
 	}
 
+	/**
+	 * Returns events scheduled for the day
+	 */
 	public ArrayList<Event> getTodaysEvents() {
 		return todaysEvents;
 	}
 
+	
+	/**
+	 * Sets list with events for the day
+	 */
+	
 	public void setTodaysEvents() {
 		Calendar currEvent;
-		todaysEvents = new ArrayList<Event>();
+		
+		todaysEvents = new ArrayList<Event>();	
 		// find event that has same date as given date
-		for (int i = 0; i < events.size(); i++) {
-			currEvent = events.get(i).getDateTime();
+		
+		for (int i = 0; i < events.size(); i++) {		
+			currEvent = events.get(i).getDateTime();			
 			if ((currEvent.get(Calendar.YEAR) == gcal.get(Calendar.YEAR))
 					&& (currEvent.get(Calendar.MONTH) == gcal.get(Calendar.MONTH))
 					&& (currEvent.get(Calendar.DAY_OF_MONTH) == gcal.get(Calendar.DAY_OF_MONTH)))
 				todaysEvents.add(events.get(i));
 		}
 		sortByTime(todaysEvents);
-		
 	}
 
 	/**
-	 * This is the printMonthView method that finds events scheduled for this
-	 * month and calls printHighlightMethod to highlight and print them.
-	 * 
-	 * @param mycal
-	 * @return nothing
-	 */
-
-	public void printMonthView() {
-		sortByTime(events);
-		Calendar currEvent;
-
-		for (int i = 0; i < events.size(); i++) {
-			currEvent = events.get(i).getDateTime();
-			if ((currEvent.get(Calendar.YEAR) == gcal.get(Calendar.YEAR))
-					&& (currEvent.get(Calendar.MONTH) == gcal.get(Calendar.MONTH))) {
-				// evdates.add(events.get(i).getDateTime().get(Calendar.DAY_OF_MONTH));
-			}
-		}
-		// printHighlightMonth();
-	}
-
-	/**
-	 * This is the deleteAll method that deletes all the events
-	 * 
-	 * @param nothing.
-	 * @return nothing.
-	 */
-
-	public void deleteAll() {
-		events.clear();
-		if (events.isEmpty())
-			System.out.println("Successfully deleted all events.");
-		else
-			System.out.println("DeleteAll failed.");
-	}
-
-	/**
-	 * This is the sortByTime method that sorts events by date and time
+	 * Sorts events by date and time
 	 * 
 	 * @param ev
 	 *            : list of events
-	 * @return nothing.
 	 */
 
 	public void sortByTime(ArrayList<Event> ev) {
+		
 		Collections.sort(ev, new Comparator<Event>() {
 			public int compare(Event e1, Event e2) {
 				return e1.dateTime.getTime().compareTo(e2.dateTime.getTime());
@@ -247,52 +233,31 @@ public class Model {
 		});
 	}
 
-	public void displayEvents() {
-		if (events.isEmpty())
-			System.out.println("Eventlist empty.\n");
-		else {
-			sortByTime(events);
-			for (int i = 0; i < events.size(); i++)
-				System.out.println(events.get(i).toString());
-		}
-	}
-
-	public int getDay() {
-		return day;
-	}
-
-	public void setDay(int day) {
-		this.day = day;
-	}
-
-	public int getYear() {
-		return year;
-	}
-
-	public void setYear(int year) {
-		this.year = year;
-	}
-
-	public int getMonth() {
-		return month;
-	}
-
-	public void setMonth(int month) {
-		this.month = month;
-	}
+	/**
+	 * Following month
+	 */
 
 	public void nextMonth() {
 		gcal.add(Calendar.MONTH, 1);
 	}
 
+	/**
+	 * Previous month
+	 */
 	public void prevMonth() {
 		gcal.add(Calendar.MONTH, -1);
 	}
 
+	/**
+	 * Previous day
+	 */
 	public void prevDay() {
 		gcal.add(Calendar.DAY_OF_MONTH, -1);
 	}
 
+	/**
+	 * Next day
+	 */
 	public void nextDay() {
 		gcal.add(Calendar.DAY_OF_MONTH, 1);
 	}

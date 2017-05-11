@@ -3,6 +3,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -41,8 +42,7 @@ enum DAYS {
 }
 
 /**
- * @author jo
- *
+ * @author Joanitha Christle Gomez CalendarView has the view for the Calendar
  */
 public class CalendarView extends JPanel implements ChangeListener {
 
@@ -57,24 +57,18 @@ public class CalendarView extends JPanel implements ChangeListener {
 	JTextField dateField;
 	JTextField fromField;
 	JTextField toField;
-	JTextArea area;
 	TitledBorder border;
 	JPanel datePanel;
 	JPanel monthViewPanel;
 	JPanel eventPanel;
 	JPanel dayViewPanel;
-	JButton eventButton;
 
 	CalendarView(final Model model) {
 
-		setBorder(border);
-
-		System.out.println("Loading events..");
-
 		File f = new File("event.ser");
-		if (f.exists()) {
+		if (f.exists())
 			model.readFile("event.ser");
-		} else
+		else
 			JOptionPane.showMessageDialog(null, "First run! File does not exist.");
 
 		this.model = model;
@@ -84,10 +78,12 @@ public class CalendarView extends JPanel implements ChangeListener {
 		model.setTodaysEvents();
 
 		JPanel titlePanel = new JPanel();
-		titlePanel.setLayout(new BorderLayout());
-		JButton createButton = new JButton("Create");
-		createButton.addActionListener(new ActionListener() {
 
+		titlePanel.setLayout(new BorderLayout());
+
+		JButton createButton = new JButton("Create");
+
+		createButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				createEventDialog();
@@ -99,13 +95,12 @@ public class CalendarView extends JPanel implements ChangeListener {
 				} else {
 					model.addEvent(newEvent);
 					model.update(c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH));
-					System.out.println("Event added.");
 				}
-
 			}
 		});
 
 		JButton nextButton = new JButton(">");
+
 		nextButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -115,8 +110,8 @@ public class CalendarView extends JPanel implements ChangeListener {
 		});
 
 		JButton prevButton = new JButton("<");
-		prevButton.addActionListener(new ActionListener() {
 
+		prevButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				model.prevDay();
@@ -125,13 +120,14 @@ public class CalendarView extends JPanel implements ChangeListener {
 		});
 
 		JButton quitButton = new JButton("Quit");
+
 		final int TIME_VISIBLE = 1000;
 		quitButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				model.writeFile("event.ser");
 				JOptionPane pane = new JOptionPane("Saving..", JOptionPane.INFORMATION_MESSAGE);
-				final JDialog dialog = pane.createDialog(null, "Save & Close");
+				final JDialog dialog = pane.createDialog(null, "Save");
 				dialog.setModal(false);
 				dialog.setVisible(true);
 
@@ -146,6 +142,7 @@ public class CalendarView extends JPanel implements ChangeListener {
 		});
 
 		JPanel navPanel = new JPanel();
+
 		navPanel.add(prevButton);
 		navPanel.add(nextButton);
 
@@ -154,6 +151,7 @@ public class CalendarView extends JPanel implements ChangeListener {
 		titlePanel.add(quitButton, BorderLayout.EAST);
 
 		JPanel labelPanel = new JPanel();
+
 		labelPanel.setLayout(new GridLayout(1, 0));
 		JLabel b;
 		for (int i = 0; i < 7; i++) {
@@ -165,6 +163,7 @@ public class CalendarView extends JPanel implements ChangeListener {
 		datePanel = new JPanel();
 		datePanel.setSize(30, 60);
 		datePanel.setLayout(new GridLayout(0, 7));
+
 		printCalendar();
 
 		border = new TitledBorder(
@@ -182,11 +181,12 @@ public class CalendarView extends JPanel implements ChangeListener {
 
 		dayViewPanel = new JPanel(new GridLayout(0, 1));
 		dayViewPanel.setBorder(BorderFactory.createLineBorder(Color.black));
+
 		evsToday = model.getTodaysEvents();
-		System.out.println(evsToday);
 		printEvents();
 
 		setBorder(border);
+
 		add(titlePanel, BorderLayout.NORTH);
 		add(monthViewPanel, BorderLayout.CENTER);
 		add(dayViewPanel, BorderLayout.EAST);
@@ -194,9 +194,10 @@ public class CalendarView extends JPanel implements ChangeListener {
 	}
 
 	/**
-	 * stateChanged
+	 * Repaints when model notifies of new changes
 	 * 
-	 * 
+	 * @param ChangeEvent
+	 *            ce
 	 */
 
 	@Override
@@ -214,23 +215,23 @@ public class CalendarView extends JPanel implements ChangeListener {
 		printEvents();
 		dayViewPanel.repaint();
 		repaint();
-		// printDayView();
-		printMonth(c);
+
 	}
 
 	/**
-	 * printEvents
-	 * 
-	 * 
+	 * Presents day view of the calendar that displays events scheduled
 	 */
-	private void printEvents() {
+	public void printEvents() {
+		
 		dayViewPanel.removeAll();
 		final DefaultListModel<Event> evt = new DefaultListModel<>();
-		JScrollPane eListScrollPane = null;
 		final JList<Event> eList = new JList<>(evt);
+		JScrollPane eListScrollPane = null;
+
 		eList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		eList.setSelectedIndex(0);
 		eList.setVisibleRowCount(-1);
+
 		eListScrollPane = new JScrollPane(eList);
 		Dimension d = eList.getPreferredSize();
 		d.width = 300;
@@ -238,44 +239,42 @@ public class CalendarView extends JPanel implements ChangeListener {
 
 		final JPopupMenu menu = new JPopupMenu();
 		JMenuItem delete = new JMenuItem("Delete");
-
 		for (int i = 0; i < evsToday.size(); i++) {
 			evt.addElement(evsToday.get(i));
-
-			final Event ev = evsToday.get(i);
-
-			delete.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					int option = JOptionPane.showConfirmDialog(null, "Delete " + ev.title + "?");
-					if (option == 0) {
-						model.deleteEvent(ev);
-						model.update(c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH));
-					}
-				}
-
-			});
+		}			
 
 			menu.add(delete);
 			eList.addMouseListener(new MouseAdapter() {
-
 				public void mouseClicked(MouseEvent e) {
-					eList.setSelectedIndex(eList.locationToIndex(e.getPoint()));
-					menu.show(e.getComponent(), e.getX(), e.getY());
+				//	int index = eList.locationToIndex(e.getPoint());
+					
+					Rectangle r = eList.getCellBounds(0, eList.getLastVisibleIndex());
+					if (r != null && r.contains(e.getPoint())) {
+						eList.setSelectedIndex(eList.locationToIndex(e.getPoint()));
+						menu.show(e.getComponent(), e.getX(), e.getY());
+					}
 				}
 			});
-
-			eList.setComponentPopupMenu(menu);
-		}
+			
+			delete.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					int option = JOptionPane.showConfirmDialog(null, "Delete " + evt.elementAt(eList.getSelectedIndex()).title + "?");
+					if (option == 0) {
+						model.deleteEvent(eList.getSelectedValue());
+						model.update(c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH));
+					}
+				}
+			});
+		
 		dayViewPanel.add(eListScrollPane);
 	}
 
+	
 	/**
-	 * printCalendar
-	 * 
-	 * 
+	 * Displays calendar with event days highlighted.
 	 */
-
+	
 	public void printCalendar() {
 		datePanel.removeAll();
 
@@ -332,16 +331,16 @@ public class CalendarView extends JPanel implements ChangeListener {
 
 		datePanel.revalidate();
 	}
+
 	/**
-	 * hasEvent
+	 * Determines if this day has an event scheduled
 	 * 
-	 * 
+	 * @param date
 	 */
-	public boolean hasEvent(int date) {
+	private boolean hasEvent(int date) {
 		Calendar cal;
 		for (Event e : evs) {
 			cal = e.getDateTime();
-			System.out.println(cal.getTime());
 			if ((cal.get(Calendar.YEAR) == c.get(Calendar.YEAR)) && (cal.get(Calendar.MONTH) == c.get(Calendar.MONTH))
 					&& cal.get(Calendar.DAY_OF_MONTH) == date)
 				return true;
@@ -350,9 +349,7 @@ public class CalendarView extends JPanel implements ChangeListener {
 	}
 
 	/**
-	 * createEventDialog
-	 * 
-	 * 
+	 * Input boxes through which user can enter an event
 	 */
 	public void createEventDialog() {
 		JPanel panel = new JPanel(new GridLayout(0, 1));
@@ -360,97 +357,23 @@ public class CalendarView extends JPanel implements ChangeListener {
 		dateField = new JTextField();
 		fromField = new JTextField();
 		toField = new JTextField();
+		
 		panel.add(new JLabel("Title:"));
 		panel.add(titleField);
-		panel.add(new JLabel("Date: "));
-		dateField
-				.setText((c.get(Calendar.MONTH) + 1) + "/" + c.get(Calendar.DAY_OF_MONTH) + "/" + c.get(Calendar.YEAR));
+		panel.add(new JLabel("Date: "));		
+		dateField.setText((c.get(Calendar.MONTH) + 1) + "/" + c.get(Calendar.DAY_OF_MONTH) + "/" + c.get(Calendar.YEAR));
+		
 		panel.add(dateField);
 		panel.add(new JLabel("From:"));
 		panel.add(fromField);
 		panel.add(new JLabel("To:"));
 		panel.add(toField);
-		int result = JOptionPane.showConfirmDialog(null, panel, "Create Event", JOptionPane.OK_CANCEL_OPTION,
-				JOptionPane.PLAIN_MESSAGE);
-		if (result == JOptionPane.OK_OPTION) {
-			System.out.println(titleField.getText() + " " + fromField.getText() + "-" + toField.getText());
-		} else {
-			System.out.println("Cancelled");
-		}
-
+		
+		JOptionPane.showConfirmDialog(null, panel, "Create Event", JOptionPane.OK_CANCEL_OPTION,
+				JOptionPane.PLAIN_MESSAGE);		
 	}
 
-	public void printHighlightMonth(ArrayList<Integer> eventdates) {
-		MONTHS[] arrayOfMonths = MONTHS.values();
-
-		System.out.println(arrayOfMonths[c.get(Calendar.MONTH)] + " " + c.get(Calendar.YEAR));
-		System.out.println("Su Mo Tu We Th Fr Sa");
-
-		int first = c.get(Calendar.DAY_OF_WEEK) - 1;
-		int last = c.getActualMaximum(Calendar.DAY_OF_MONTH);
-
-		String[][] grid = new String[6][7];
-		int date = 1;
-		int i = 0;
-		for (int row = 0; row < 6; row++) {
-			for (int col = 0; col < 7; col++) {
-				if ((row == 0 && col < first) || (date > last)) {
-					grid[row][col] = " ";
-				} else if (i < eventdates.size() && date == eventdates.get(i)) {
-					grid[row][col] = "[" + Integer.toString(date++) + "]";
-					i++;
-				} else
-					grid[row][col] = Integer.toString(date++);
-
-			}
-		}
-
-		for (int row = 0; row < 6; row++) {
-			for (int col = 0; col < 7; col++) {
-
-				String s = String.format("%2s", grid[row][col]);
-				System.out.print(s + " ");
-			}
-			System.out.print("\n");
-		}
-	}
-
-	public void printMonth(Calendar cal) {
-		MONTHS[] arrayOfMonths = MONTHS.values();
-
-		System.out.println(arrayOfMonths[c.get(Calendar.MONTH)] + " " + cal.get(Calendar.YEAR));
-		System.out.println("Su Mo Tu We Th Fr Sa");
-
-		GregorianCalendar temp = new GregorianCalendar(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), 1);
-		int first = temp.get(Calendar.DAY_OF_WEEK) - 1;
-		int last = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
-
-		String[][] grid = new String[6][7];
-		int date = 1;
-		for (int row = 0; row < 6; row++) {
-			for (int col = 0; col < 7; col++) {
-
-				if ((row == 0 && col < first) || (date > last)) {
-					grid[row][col] = " ";
-				} else if (date == c.get(Calendar.DAY_OF_MONTH)) {
-					grid[row][col] = "[" + Integer.toString(date++) + "]";
-					// i++
-				} else
-					grid[row][col] = Integer.toString(date++);
-
-			}
-		}
-
-		for (int row = 0; row < 6; row++) {
-			for (int col = 0; col < 7; col++) {
-
-				String s = String.format("%2s", grid[row][col]);
-				System.out.print(s + " ");
-			}
-			System.out.print("\n");
-		}
-	}
-
+	
 	private static final int PREF_W = 900;
 	private static final int PREF_H = 400;
 
